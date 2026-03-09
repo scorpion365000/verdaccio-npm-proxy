@@ -1,26 +1,38 @@
+# ------------------------------
+# Stage 1: Build Verdaccio
+# ------------------------------
 FROM --platform=${BUILDPLATFORM:-linux/amd64} node:24-alpine AS builder
 
 ENV NODE_ENV=development \
     VERDACCIO_BUILD_REGISTRY=https://registry.npmjs.org
 
-RUN apk --no-cache add openssl ca-certificates wget && \
-    apk --no-cache add g++ gcc libgcc libstdc++ linux-headers make python3 && \
-    wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
-    wget -q https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.35-r0/glibc-2.35-r0.apk && \
-    apk add --force-overwrite glibc-2.35-r0.apk
+# Install build tools
+RUN apk add --no-cache git python3 make g++ openssl bash curl
 
 WORKDIR /opt/verdaccio-build
-COPY . .
-RUN npm -g i corepack && \
-    corepack install && \
-    pnpm config set registry $VERDACCIO_BUILD_REGISTRY && \
-    pnpm install --frozen-lockfile --ignore-scripts && \
-    rm -Rf test && \
-    pnpm run build
-# FIXME: need to remove devDependencies from the build
-# NODE_ENV=production pnpm install --frozen-lockfile --ignore-scripts
-# RUN pnpm install --prod --ignore-scripts
 
+# Copy source code
+COPY . .
+
+# Enable Corepack and pin pnpm
+RUN corepack enable && corepack prepare pnpm@10.5.2 --activate
+
+# Configure pnpm registry and install dependencies with retry
+RUN pnpm config set registry $VERDACCIO_BUILD_REGISTRY && \
+    set -ex; \
+    for i in 1 2 3; do \
+        pnpm install --frozen-lockfile --network-concurrency 1 --fetch-timeout 600000 && break || sleep 5; \
+    done
+
+# Add S3 storage plugin for Cloudflare R2 at workspace root
+RUN pnpm add -w verdaccio-aws-s3-storage
+
+# Build Verdaccio
+RUN pnpm run build
+
+# ------------------------------
+# Stage 2: Production Image
+# ------------------------------
 FROM node:24-alpine
 LABEL maintainer="https://github.com/verdaccio/verdaccio"
 
@@ -35,26 +47,34 @@ ENV PATH=$VERDACCIO_APPDIR/docker-bin:$PATH \
 
 WORKDIR $VERDACCIO_APPDIR
 
-RUN apk --no-cache add openssl dumb-init
+# Install runtime dependencies
+RUN apk add --no-cache openssl dumb-init bash curl
 
-RUN mkdir -p /verdaccio/storage /verdaccio/plugins /verdaccio/conf
+# Create config folders
+RUN mkdir -p /verdaccio/conf /verdaccio/plugins
 
+# Copy built files from builder
 COPY --from=builder /opt/verdaccio-build .
 
-RUN ls packages/config/src/conf
-ADD packages/config/src/conf/docker.yaml /verdaccio/conf/config.yaml
+# Copy custom config (Cloudflare R2 + disable remote login)
+COPY packages/config/src/conf/custom-config.yml /verdaccio/conf/config.yaml
 
+# Create Verdaccio user
 RUN adduser -u $VERDACCIO_USER_UID -S -D -h $VERDACCIO_APPDIR -g "$VERDACCIO_USER_NAME user" -s /sbin/nologin $VERDACCIO_USER_NAME && \
     chmod -R +x $VERDACCIO_APPDIR/packages/verdaccio/bin $VERDACCIO_APPDIR/docker-bin && \
-    chown -R $VERDACCIO_USER_UID:root /verdaccio/storage /verdaccio/conf && \
-    chmod -R g=u /verdaccio/storage /verdaccio/conf /etc/passwd
+    chmod -R g=u /verdaccio/conf /etc/passwd
 
 USER $VERDACCIO_USER_UID
 
+# Expose registry port
 EXPOSE $VERDACCIO_PORT
 
-VOLUME /verdaccio/storage
+# Remove local storage volume since Cloudflare R2 will be used
+# VOLUME /verdaccio/storage
 
-ENTRYPOINT ["uid_entrypoint"]
+# Entrypoint
+# Use dumb-init for proper signal handling, then run uid_entrypoint
+ENTRYPOINT ["dumb-init", "--", "uid_entrypoint"]
 
-CMD $VERDACCIO_APPDIR/packages/verdaccio/bin/verdaccio --config /verdaccio/conf/config.yaml --listen $VERDACCIO_PROTOCOL://$VERDACCIO_ADDRESS:$VERDACCIO_PORT
+# Run Verdaccio (JSON CMD; env vars expanded by sh; exec ensures signals reach Verdaccio)
+CMD ["sh", "-c", "exec \"$VERDACCIO_APPDIR/packages/verdaccio/bin/verdaccio\" --config /verdaccio/conf/config.yaml --listen \"$VERDACCIO_PROTOCOL://$VERDACCIO_ADDRESS:$VERDACCIO_PORT\""]

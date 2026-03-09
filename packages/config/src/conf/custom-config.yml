@@ -1,0 +1,50 @@
+# ------------------------------
+# Verdaccio Caching Proxy Config
+# ------------------------------
+
+# Use S3-compatible Cloudflare R2 as storage
+store:
+  aws-s3-storage:
+    bucket: ${R2_BUCKET}                   # R2 bucket name
+    region: auto
+    accessKeyId: ${R2_ACCESS_KEY}          # R2 access key
+    secretAccessKey: ${R2_SECRET_KEY}      # R2 secret key
+    endpoint: https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com
+    s3ForcePathStyle: true
+
+# Web UI
+web:
+  title: Verdaccio Cache Proxy
+
+# Authentication: disabled
+auth:
+  htpasswd:
+    max_users: 0   # disables login
+
+# Upstream registry to proxy
+uplinks:
+  npmjs:
+    url: https://registry.npmjs.org/
+
+# Package access rules
+packages:
+  '**':
+    access: $all      # read access for everyone
+    publish: $none    # disable publishing
+    unpublish: $none  # disable unpublishing
+    proxy: npmjs      # proxy missing packages to npm
+    storage: aws-s3-storage  # use Cloudflare R2 for storage
+
+# Logging
+log:
+  type: stdout
+  format: pretty
+  level: http
+
+# Listen on all interfaces
+listen: 0.0.0.0:4873
+
+# Enable audit middleware
+middlewares:
+  audit:
+    enabled: true
