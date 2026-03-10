@@ -8,11 +8,11 @@ storage: /verdaccio/storage
 # Use S3-compatible Cloudflare R2 as storage
 store:
   aws-s3-storage:
-    bucket: ${R2_BUCKET}                   # R2 bucket name
+    bucket: R2_BUCKET                   # R2 bucket name (env var)
     region: auto
-    accessKeyId: ${R2_ACCESS_KEY}          # R2 access key
-    secretAccessKey: ${R2_SECRET_KEY}      # R2 secret key
-    endpoint: https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com
+    accessKeyId: R2_ACCESS_KEY          # R2 access key (env var)
+    secretAccessKey: R2_SECRET_KEY      # R2 secret key (env var)
+    endpoint: R2_ENDPOINT               # R2 endpoint (env var): https://{account-id}.r2.cloudflarestorage.com
     s3ForcePathStyle: true
 
 # Web UI
