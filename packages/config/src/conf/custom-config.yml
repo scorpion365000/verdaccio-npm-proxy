@@ -2,6 +2,9 @@
 # Verdaccio Caching Proxy Config
 # ------------------------------
 
+# Local storage path (required by Verdaccio)
+storage: /verdaccio/storage
+
 # Use S3-compatible Cloudflare R2 as storage
 store:
   aws-s3-storage:
