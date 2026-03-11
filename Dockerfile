@@ -105,8 +105,6 @@ USER $VERDACCIO_USER_UID
 
 EXPOSE $VERDACCIO_PORT
 
-VOLUME /verdaccio/storage
-
 # Use existing uid_entrypoint from repo if present; otherwise fall back to dumb-init entry
 # If you have the uid_entrypoint helper in docker-bin, the ENTRYPOINT should invoke it (keeps compatibility with upstream).
 ENTRYPOINT ["uid_entrypoint"]
