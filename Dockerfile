@@ -47,6 +47,7 @@ WORKDIR $VERDACCIO_APPDIR
 RUN apk add --no-cache openssl dumb-init bash curl
 
 RUN mkdir -p /verdaccio/conf /verdaccio/plugins
+COPY packages/config/src/conf/custom-config.yml /verdaccio/conf/config.yaml
 
 # Copy built Verdaccio
 COPY --from=builder /opt/verdaccio-build .
