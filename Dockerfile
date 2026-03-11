@@ -20,8 +20,11 @@ WORKDIR /opt/verdaccio-build
 
 # Copy source code and the plugin tarball into the builder.
 # (This ensures pnpm can resolve workspace: dependencies referenced by the plugin)
+RUN curl -L https://registry.npmjs.org/verdaccio-aws-s3-storage/-/verdaccio-aws-s3-storage-11.0.0-6-next.10.tgz \
+  -o verdaccio-aws-s3-storage.tgz
+
 COPY . .
-COPY verdaccio-aws-s3-storage-11.0.0-6-next.10.tgz .
+ 
 
 # Enable Corepack and pin pnpm
 RUN corepack enable && corepack prepare pnpm@10.5.2 --activate
