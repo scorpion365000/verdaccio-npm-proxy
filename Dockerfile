@@ -54,7 +54,8 @@ RUN mkdir -p /verdaccio/conf /verdaccio/plugins
 COPY --from=builder /opt/verdaccio-build .
 
 # Install S3 storage plugin in the final image
-RUN npm install verdaccio-aws-s3-storage
+RUN npm config set registry https://registry.npmjs.org && \
+    npm install verdaccio-aws-s3-storage@10.4.0
 
 # Create Verdaccio user
 RUN adduser -u $VERDACCIO_USER_UID -S -D -h $VERDACCIO_APPDIR -g "$VERDACCIO_USER_NAME user" -s /sbin/nologin $VERDACCIO_USER_NAME && \
