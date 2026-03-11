@@ -24,9 +24,6 @@ RUN pnpm config set registry $VERDACCIO_BUILD_REGISTRY && \
         pnpm install --frozen-lockfile --network-concurrency 1 --fetch-timeout 600000 && break || sleep 5; \
     done
 
-# Add S3 storage plugin for Cloudflare R2 at workspace root
-RUN pnpm add -w verdaccio-aws-s3-storage
-
 # Build Verdaccio
 RUN pnpm run build
 
@@ -56,8 +53,8 @@ RUN mkdir -p /verdaccio/conf /verdaccio/plugins
 # Copy built files from builder
 COPY --from=builder /opt/verdaccio-build .
 
-# Copy custom config (Cloudflare R2 + disable remote login)
-COPY packages/config/src/conf/custom-config.yml /verdaccio/conf/config.yaml
+# Install S3 storage plugin in the final image
+RUN npm install verdaccio-aws-s3-storage
 
 # Create Verdaccio user
 RUN adduser -u $VERDACCIO_USER_UID -S -D -h $VERDACCIO_APPDIR -g "$VERDACCIO_USER_NAME user" -s /sbin/nologin $VERDACCIO_USER_NAME && \
