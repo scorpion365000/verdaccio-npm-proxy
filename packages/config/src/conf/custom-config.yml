@@ -5,7 +5,7 @@
 storage: /verdaccio/storage
 
 store:
-  aws-s3:
+  aws-s3-storage:
     bucket: ${R2_BUCKET}
     region: auto
     accessKeyId: ${R2_ACCESS_KEY}
@@ -31,7 +31,7 @@ packages:
     publish: $none
     unpublish: $none
     proxy: npmjs
-    storage: aws-s3
+    storage: aws-s3-storage
 
 log:
   type: stdout
