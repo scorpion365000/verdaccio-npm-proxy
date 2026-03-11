@@ -64,11 +64,14 @@ COPY --from=builder /opt/verdaccio-build .
 # Copy your custom config
 COPY packages/config/src/conf/custom-config.yml /verdaccio/conf/config.yaml
 
-# Fix permissions for Verdaccio user
 RUN adduser -u $VERDACCIO_USER_UID -S -D -h $VERDACCIO_APPDIR \
     -g "$VERDACCIO_USER_NAME user" -s /sbin/nologin $VERDACCIO_USER_NAME && \
+    mkdir -p /verdaccio/conf /verdaccio/storage && \
+    touch /verdaccio/conf/htpasswd && \
     chown -R $VERDACCIO_USER_UID:0 /verdaccio && \
-    chmod -R 775 /verdaccio
+    chmod -R 775 /verdaccio && \
+    chmod 660 /verdaccio/conf/htpasswd
+    
 
 # Run as non-root
 USER $VERDACCIO_USER_UID
