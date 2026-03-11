@@ -22,7 +22,7 @@ RUN pnpm config set registry $VERDACCIO_BUILD_REGISTRY && \
     pnpm install --frozen-lockfile
 
 # Install AWS S3 / Cloudflare R2 storage plugin
-RUN pnpm add verdaccio-aws-s3-storage@11.0.0-6-next.10
+RUN pnpm add -w verdaccio-aws-s3-storage@11.0.0-6-next.10
 
 # Build Verdaccio
 RUN pnpm run build
