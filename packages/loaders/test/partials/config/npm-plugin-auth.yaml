@@ -1,8 +1,0 @@
-# require('verdaccio-auth-memory') as dependency
-#
-# "devDependencies": {
-#   "verdaccio-auth-memory": "workspace:*"
-# }
-auth:
-  auth-memory:
-    enabled: true

@@ -4,8 +4,9 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     coverage: {
-      exclude: ['./build', 'test'],
+      reporter: ['text', 'html'],
+      include: ['src'],
+      exclude: ['./build', 'test', 'src/api/debug'],
     },
-    globals: true,
   },
 });
