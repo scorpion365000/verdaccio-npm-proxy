@@ -124,8 +124,10 @@ RUN mkdir -p /verdaccio/storage /verdaccio/conf \
 
 USER $VERDACCIO_USER_UID
 
+ 
 EXPOSE $VERDACCIO_PORT
 
-ENTRYPOINT ["uid_entrypoint"]
+ENTRYPOINT ["dumb-init", "--"]
 
-CMD ["/bin/sh", "-c", "verdaccio --config /verdaccio/conf/config.yaml --listen $VERDACCIO_PROTOCOL://$VERDACCIO_ADDRESS:$VERDACCIO_PORT"]
+CMD ["verdaccio", "--config", "/verdaccio/conf/config.yaml", "--listen", "0.0.0.0:4873"]
+ 
