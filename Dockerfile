@@ -99,6 +99,8 @@ COPY custom-config.yml /verdaccio/conf/config.yaml
 # add docker helper scripts
 ADD docker-bin $VERDACCIO_APPDIR/docker-bin
 
+RUN chmod +x $VERDACCIO_APPDIR/docker-bin/* \
+    && chmod +x /usr/local/lib/node_modules/verdaccio/bin/verdaccio
 # create non-root user
 RUN adduser \
     -u $VERDACCIO_USER_UID \
